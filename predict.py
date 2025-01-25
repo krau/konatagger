@@ -14,9 +14,11 @@ from Models import VisionModel
 _model_path = config.config.get("model_path", "./models")
 THRESHOLD = config.config.get("threshold", 0.4)
 
+device = "cuda" if torch.cuda.is_available() else "cpu"
+
 model = VisionModel.load_model(_model_path)
 model.eval()
-model = model.to("cuda")
+model = model.to(device)
 
 with open(Path(_model_path) / "top_tags.txt", "r") as f:
     top_tags = [line.strip() for line in f.readlines() if line.strip()]
@@ -52,10 +54,10 @@ async def prepare_image(image: Image.Image, target_size: int) -> torch.Tensor:
 async def predict(image: Image.Image) -> tuple[list[str], dict[str, Any]]:
     image_tensor = await prepare_image(image, model.image_size)
     batch = {
-        "image": image_tensor.unsqueeze(0).to("cuda"),
+        "image": image_tensor.unsqueeze(0).to(device),
     }
 
-    with torch.amp.autocast_mode.autocast("cuda", enabled=True):
+    with torch.amp.autocast_mode.autocast(device, enabled=True):
         preds = model(batch)
         tag_preds = preds["tags"].sigmoid().cpu()
 
