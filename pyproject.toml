@@ -16,3 +16,10 @@ dependencies = [
     "transformers>=4.36.2",
     "uvicorn>=0.34.0",
 ]
+
+
+[tool.ruff]
+lint.select = ["I"]
+
+[tool.uv]
+dev-dependencies = ["ruff>=0.6.5"]

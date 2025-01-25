@@ -1,8 +1,10 @@
-from fastapi import FastAPI, File, Header, UploadFile, HTTPException
+import io
+from typing import Dict, List
+
+from fastapi import FastAPI, File, Header, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from PIL import Image
-import io
-from typing import List, Dict
+
 import config
 from predict import predict
 

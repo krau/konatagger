@@ -1,17 +1,17 @@
 import json
+import math
 from pathlib import Path
 from typing import Optional
+
+import einops
 import torch
 import torch.backends.cuda
 import torch.nn as nn
 import torch.nn.backends
 import torch.nn.functional as F
 import torchvision
-
-from transformers.activations import QuickGELUActivation
-import math
 from einops.layers.torch import Rearrange
-import einops
+from transformers.activations import QuickGELUActivation
 
 
 class VisionModel(nn.Module):

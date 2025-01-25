@@ -1,14 +1,15 @@
 import argparse
 import asyncio
-from typing import Any
-from Models import VisionModel
-from PIL import Image
-import torch.amp.autocast_mode
 from pathlib import Path
+from typing import Any
+
 import torch
+import torch.amp.autocast_mode
 import torchvision.transforms.functional as TVF
+from PIL import Image
 
 import config
+from Models import VisionModel
 
 _model_path = config.config.get("model_path", "./models")
 THRESHOLD = config.config.get("threshold", 0.4)
