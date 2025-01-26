@@ -1,5 +1,6 @@
 import argparse
 import asyncio
+import time
 from pathlib import Path
 from typing import Any
 
@@ -14,7 +15,8 @@ from Models import VisionModel
 _model_path = config.config.get("model_path", "./models")
 THRESHOLD = config.config.get("threshold", 0.4)
 
-device = "cuda" if torch.cuda.is_available() else "cpu"
+device = config.config.get("device", "cuda" if torch.cuda.is_available() else "cpu")
+_use_cpu = device == "cpu"
 
 model = VisionModel.load_model(_model_path)
 model.eval()
@@ -57,7 +59,7 @@ async def predict(image: Image.Image) -> tuple[list[str], dict[str, Any]]:
         "image": image_tensor.unsqueeze(0).to(device),
     }
 
-    with torch.amp.autocast_mode.autocast(device, enabled=True):
+    with torch.amp.autocast_mode.autocast(device, enabled=not _use_cpu):
         preds = model(batch)
         tag_preds = preds["tags"].sigmoid().cpu()
 
@@ -71,10 +73,13 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("image", type=str, help="Path to image file")
     args = parser.parse_args()
+    print(f"Using device: {device}")
     image = Image.open(args.image)
     loop = asyncio.new_event_loop()
+    time_start = time.time()
     tag_string, scores = loop.run_until_complete(predict(image))
     print(f"Predicted tags: {tag_string}")
     for tag, score in sorted(scores.items(), key=lambda x: x[1], reverse=True):
         print(f"{tag}: {score:.3f}")
     loop.close()
+    print(f"Time cost: {time.time() - time_start:.3f}s")

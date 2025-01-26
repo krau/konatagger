@@ -8,3 +8,4 @@ __pycache__
 test.jpg
 # Ignore dynaconf secret files
 .secrets.*
+.vscode/
