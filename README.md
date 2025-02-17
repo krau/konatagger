@@ -13,6 +13,8 @@ Requirements:
 
 Clone the repository.
 
+Download the model weights from [JoyTag Hugging Face](https://huggingface.co/fancyfeast/joytag/tree/main) and save it to `model/`.
+
 Create a virtual environment and install the dependencies.
 
 > If your machine does not have GPU, you can install the CPU version by option: --index-url https://download.pytorch.org/whl/cpu
