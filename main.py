@@ -1,6 +1,7 @@
 import io
 from typing import Dict, List
 
+import pillow_avif  # noqa: F401
 from fastapi import FastAPI, File, Header, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from PIL import Image
@@ -42,6 +43,7 @@ async def predict_image(file: UploadFile = File(...), Authorization: str = Heade
 
     try:
         contents = await file.read()
+        # 转为 jpg 格式
         image = Image.open(io.BytesIO(contents)).convert("RGB")
         predicted_tags, scores = await predict(image)
 

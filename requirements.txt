@@ -33,6 +33,7 @@ nvidia-nvjitlink-cu12==12.4.127 ; platform_machine == 'x86_64' and sys_platform 
 nvidia-nvtx-cu12==12.4.127 ; platform_machine == 'x86_64' and sys_platform == 'linux'
 packaging==24.2
 pillow==11.1.0
+pillow-avif-plugin==1.5.0
 pydantic==2.10.6
 pydantic-core==2.27.2
 python-multipart==0.0.20
