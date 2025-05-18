@@ -9,7 +9,7 @@ from PIL import Image
 import config
 from predict import predict
 
-app = FastAPI(title="KonaTagger", version="0.1.0")
+app = FastAPI(title="KonaTagger", version="0.1.1")
 
 
 app.add_middleware(
@@ -43,7 +43,6 @@ async def predict_image(file: UploadFile = File(...), Authorization: str = Heade
 
     try:
         contents = await file.read()
-        # 转为 jpg 格式
         image = Image.open(io.BytesIO(contents)).convert("RGB")
         predicted_tags, scores = await predict(image)
 
