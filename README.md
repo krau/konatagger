@@ -17,8 +17,6 @@ Download the model weights from [JoyTag Hugging Face](https://huggingface.co/fan
 
 Create a virtual environment and install the dependencies.
 
-> If your machine does not have GPU, you can install the CPU version by option: --index-url https://download.pytorch.org/whl/cpu
-
 Edit the configuration file `config.toml`:
 
 ```toml
@@ -26,7 +24,7 @@ token = "token" # Bearer token
 port = 39917
 host = "0.0.0.0"
 threshold = 0.5
-device = "cuda" # "cpu" or "cuda"
+device = "cpu" # "cpu" or "cuda"
 ```
 
 Run the server:
