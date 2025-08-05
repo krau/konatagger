@@ -1,4 +1,3 @@
-models/
 /validation-arena/originals
 /validation-arena/resized
 *.pt

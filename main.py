@@ -6,7 +6,7 @@ from fastapi import FastAPI, File, Header, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from PIL import Image
 
-import config
+from config import config
 from predict import predict
 
 app = FastAPI(title="KonaTagger", version="0.1.1")
@@ -22,7 +22,7 @@ app.add_middleware(
 
 
 def authenticate(auth_header: str = Header(...)):
-    if auth_header != "Bearer " + config.config.get("token"):
+    if auth_header != "Bearer " + config.get("token"):
         raise HTTPException(
             status_code=401, detail="认证失败", headers={"WWW-Authenticate": "Basic"}
         )
@@ -69,6 +69,6 @@ if __name__ == "__main__":
 
     uvicorn.run(
         app,
-        host=config.config.get("host", "0.0.0.0"),
-        port=config.config.get("port", 8000),
+        host=config.get("host", "0.0.0.0"),
+        port=config.get("port", 8000),
     )
