@@ -17,6 +17,7 @@ type Config struct {
 
 	ModelUrl      string `toml:"model_url" mapstructure:"model_url"`
 	ModelDir      string `toml:"model_dir" mapstructure:"model_dir"`
+	ModelTagsUrl  string `toml:"model_tags_url" mapstructure:"model_tags_url"`
 	ModelTagsName string `toml:"model_tags_name" mapstructure:"model_tags_name"`
 	ModelFileName string `toml:"model_file_name" mapstructure:"model_file_name"`
 }
@@ -28,6 +29,7 @@ var (
 		Port:          "8000",
 		Threshold:     0.4,
 		ModelUrl:      "https://huggingface.co/fancyfeast/joytag/resolve/main/model.onnx?download=true",
+		ModelTagsUrl:  "https://huggingface.co/fancyfeast/joytag/resolve/main/top_tags.txt?download=true",
 		ModelDir:      "models",
 		ModelTagsName: "top_tags.txt",
 		ModelFileName: "model.onnx",
@@ -57,6 +59,7 @@ func C() Config {
 		libonnx := fs.String("libonnx", cfg.Libonnx, "onnx runtime shared library path")
 		modelURL := fs.String("model_url", cfg.ModelUrl, "model download url")
 		modelDir := fs.String("model_dir", cfg.ModelDir, "model directory")
+		modelTagsURL := fs.String("model_tags_url", cfg.ModelTagsUrl, "model tags download url")
 		modelTagsName := fs.String("model_tags_name", cfg.ModelTagsName, "model tags filename")
 		modelFileName := fs.String("model_file_name", cfg.ModelFileName, "model file name")
 
@@ -78,6 +81,8 @@ func C() Config {
 				cfg.ModelUrl = *modelURL
 			case "model_dir":
 				cfg.ModelDir = *modelDir
+			case "model_tags_url":
+				cfg.ModelTagsUrl = *modelTagsURL
 			case "model_tags_name":
 				cfg.ModelTagsName = *modelTagsName
 			case "model_file_name":
