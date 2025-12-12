@@ -1,6 +1,7 @@
 package config
 
 import (
+	"flag"
 	"os"
 	"sync"
 
@@ -45,6 +46,44 @@ func C() Config {
 				panic(err)
 			}
 		}
+
+		fs := flag.NewFlagSet("konatagger", flag.ContinueOnError)
+		fs.SetOutput(os.Stderr)
+
+		token := fs.String("token", cfg.Token, "auth token for requests")
+		host := fs.String("host", cfg.Host, "server host")
+		port := fs.String("port", cfg.Port, "server port")
+		threshold := fs.Float64("threshold", float64(cfg.Threshold), "prediction threshold")
+		libonnx := fs.String("libonnx", cfg.Libonnx, "onnx runtime shared library path")
+		modelURL := fs.String("model_url", cfg.ModelUrl, "model download url")
+		modelDir := fs.String("model_dir", cfg.ModelDir, "model directory")
+		modelTagsName := fs.String("model_tags_name", cfg.ModelTagsName, "model tags filename")
+		modelFileName := fs.String("model_file_name", cfg.ModelFileName, "model file name")
+
+		_ = fs.Parse(os.Args[1:])
+
+		fs.Visit(func(f *flag.Flag) {
+			switch f.Name {
+			case "token":
+				cfg.Token = *token
+			case "host":
+				cfg.Host = *host
+			case "port":
+				cfg.Port = *port
+			case "threshold":
+				cfg.Threshold = float32(*threshold)
+			case "libonnx":
+				cfg.Libonnx = *libonnx
+			case "model_url":
+				cfg.ModelUrl = *modelURL
+			case "model_dir":
+				cfg.ModelDir = *modelDir
+			case "model_tags_name":
+				cfg.ModelTagsName = *modelTagsName
+			case "model_file_name":
+				cfg.ModelFileName = *modelFileName
+			}
+		})
 	})
 	return cfg
 }

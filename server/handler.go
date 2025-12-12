@@ -2,13 +2,11 @@ package server
 
 import (
 	"crypto/subtle"
-	"encoding/json"
 	"errors"
 	"image"
-	"io"
-	"net/http"
 	"sort"
 
+	"github.com/gin-gonic/gin"
 	"github.com/krau/konatagger/config"
 	ort "github.com/yalue/onnxruntime_go"
 )
@@ -17,8 +15,8 @@ var (
 	errUnauthorized = errors.New("unauthorized")
 )
 
-func authenticate(r *http.Request) error {
-	auth := r.Header.Get("Authorization")
+func authenticate(c *gin.Context) error {
+	auth := c.GetHeader("Authorization")
 
 	expectedToken := config.C().Token
 	if expectedToken == "" {
@@ -35,28 +33,35 @@ func authenticate(r *http.Request) error {
 	return nil
 }
 
-func PredictHandler(w http.ResponseWriter, r *http.Request) {
-	if err := authenticate(r); err != nil {
-		http.Error(w, "认证失败", http.StatusUnauthorized)
+
+func PredictHandler(c *gin.Context) {
+	if err := authenticate(c); err != nil {
+		c.JSON(401, gin.H{"error": "认证失败"})
 		return
 	}
 
-	file, _, err := r.FormFile("file")
+	fileHeader, err := c.FormFile("file")
 	if err != nil {
-		http.Error(w, "未上传文件", http.StatusBadRequest)
+		c.JSON(400, gin.H{"error": "未上传文件"})
+		return
+	}
+
+	file, err := fileHeader.Open()
+	if err != nil {
+		c.JSON(400, gin.H{"error": "无法打开上传的文件"})
 		return
 	}
 	defer file.Close()
 
 	img, _, err := image.Decode(file)
 	if err != nil {
-		http.Error(w, "无法解析图片", http.StatusBadRequest)
+		c.JSON(400, gin.H{"error": "无法解析图片"})
 		return
 	}
 
 	inputData, err := Preprocess(img)
 	if err != nil {
-		http.Error(w, "预处理失败", http.StatusInternalServerError)
+		c.JSON(500, gin.H{"error": "预处理失败"})
 		return
 	}
 
@@ -66,7 +71,7 @@ func PredictHandler(w http.ResponseWriter, r *http.Request) {
 	copy(model.input.(*ort.Tensor[float32]).GetData(), inputData)
 
 	if err := model.session.Run(); err != nil {
-		http.Error(w, "推理失败", http.StatusInternalServerError)
+		c.JSON(500, gin.H{"error": "推理失败"})
 		return
 	}
 
@@ -102,8 +107,7 @@ func PredictHandler(w http.ResponseWriter, r *http.Request) {
 		"scores":         scores,
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(resp)
+	c.JSON(200, resp)
 }
 
 func ModelPredict(img image.Image) (map[string]float32, error) {
@@ -133,7 +137,6 @@ func ModelPredict(img image.Image) (map[string]float32, error) {
 	return scores, nil
 }
 
-func HealthHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	io.WriteString(w, `{"status":"healthy"}`)
+func HealthHandler(c *gin.Context) {
+	c.JSON(200, gin.H{"status": "healthy"})
 }
