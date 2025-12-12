@@ -1,0 +1,12 @@
+token = ""
+host = "0.0.0.0"
+port = 39771
+threshold = 0.4
+# the onnxruntime shared lib path
+libonnx = ""
+# model dir
+model_dir = ""
+# model tags file name, default is 'top_tags.txt'
+model_tags_name = ""
+# default is 'model.onnx'
+model_file_name = ""

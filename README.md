@@ -5,33 +5,17 @@ Image tagging API.
 Reference:
 - [JoyTag](https://github.com/fpgaminer/joytag)
 
-## Installation
+## Requirements
 
-Requirements:
+Onnx Runtime library: Only v1.23.2 was tested on Linux/amd64.
 
-- Python 3.12+
+If you are on Linux/amd64, the library has been embedded in the binary and will be extracted at runtime. For other platforms, please install it via your package manager or download from [ONNX Runtime releases](https://github.com/microsoft/onnxruntime)
 
-Clone the repository.
+## Configuration
 
-Download the model weights from [JoyTag Hugging Face](https://huggingface.co/fancyfeast/joytag/tree/main) and save it to `model/`.
+Configuration file is in TOML format. Sample config file `config.example.toml` is provided.
 
-Create a virtual environment and install the dependencies.
-
-Edit the configuration file `config.toml`:
-
-```toml
-token = "token" # Bearer token
-port = 39917
-host = "0.0.0.0"
-threshold = 0.5
-device = "cpu" # "cpu" or "cuda"
-```
-
-Run the server:
-
-```bash
-python main.py
-```
+Copy it to `config.toml` and modify as needed.
 
 ## Usage
 

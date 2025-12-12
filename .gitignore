@@ -8,3 +8,5 @@ test.jpg
 # Ignore dynaconf secret files
 .secrets.*
 .vscode/
+onnxlibs/
+testdata/
