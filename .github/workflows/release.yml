@@ -1,0 +1,61 @@
+name: Build Release
+
+on:
+    push:
+        tags: ["v*"]
+
+permissions:
+    contents: write
+    packages: write
+
+jobs:
+    create-release:
+        name: Create Release
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
+              with:
+                  fetch-depth: 0
+
+            - name: Create release
+              uses: softprops/action-gh-release@v2
+              with:
+                  name: ${{ github.ref_name }}${{ contains(github.ref_name, 'alpha') || contains(github.ref_name, 'beta') || contains(github.ref_name, 'rc') && ' (Pre-release)' || '' }}
+                  prerelease: ${{ contains(github.ref_name, 'alpha') || contains(github.ref_name, 'beta') || contains(github.ref_name, 'rc') }}
+
+            - name: Setup node for changelog
+              uses: actions/setup-node@v4
+              with:
+                  node-version: "20"
+
+            - name: Generate changelog
+              run: npx changelogithub
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    compile:
+        name: Build ${{ matrix.goos }}/${{ matrix.goarch }}
+        needs: create-release
+        runs-on: ubuntu-latest
+        strategy:
+            matrix:
+                goos: [linux, darwin]
+                goarch: [amd64, arm64]
+
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
+              with:
+                  fetch-depth: 0
+
+            - name: Release Go Binary
+              uses: wangyoucao577/go-release-action@v1
+              with:
+                  pre_command: export CGO_ENABLED=1
+                  goos: ${{ matrix.goos }}
+                  goarch: ${{ matrix.goarch }}
+                  github_token: ${{ secrets.GITHUB_TOKEN }}
+                  ldflags: >-
+                      -s -w
+                  binary_name: konatagger
