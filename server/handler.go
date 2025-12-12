@@ -3,7 +3,9 @@ package server
 import (
 	"crypto/subtle"
 	"errors"
+	"fmt"
 	"image"
+	"log/slog"
 	"sort"
 
 	"github.com/gin-gonic/gin"
@@ -33,7 +35,6 @@ func authenticate(c *gin.Context) error {
 	return nil
 }
 
-
 func PredictHandler(c *gin.Context) {
 	if err := authenticate(c); err != nil {
 		c.JSON(401, gin.H{"error": "认证失败"})
@@ -59,33 +60,43 @@ func PredictHandler(c *gin.Context) {
 		return
 	}
 
-	inputData, err := Preprocess(img)
+	resp, err := ModelPredict(img)
 	if err != nil {
-		c.JSON(500, gin.H{"error": "预处理失败"})
-		return
-	}
-
-	model.mu.Lock()
-	defer model.mu.Unlock()
-
-	copy(model.input.(*ort.Tensor[float32]).GetData(), inputData)
-
-	if err := model.session.Run(); err != nil {
+		slog.Error("Prediction failed", slog.String("error", err.Error()))
 		c.JSON(500, gin.H{"error": "推理失败"})
 		return
 	}
 
-	logits := model.output.(*ort.Tensor[float32]).GetData()
-	type pair struct {
-		Tag   string
-		Score float32
+	c.JSON(200, resp)
+}
+
+func ModelPredict(img image.Image) (*PredictionResult, error) {
+	inputData, err := Preprocess(img)
+	if err != nil {
+		return nil, err
 	}
-	var items []pair
+	if modelPool == nil {
+		return nil, fmt.Errorf("model not initialized")
+	}
+
+	m := <-modelPool
+	defer func() { modelPool <- m }()
+
+	copy(m.input.(*ort.Tensor[float32]).GetData(), inputData)
+	if err := m.session.Run(); err != nil {
+		return nil, err
+	}
+
+	logitsTensor := m.output.(*ort.Tensor[float32]).GetData()
+	logits := make([]float32, len(logitsTensor))
+	copy(logits, logitsTensor)
+
+	var items []TagScore
 	for i, v := range logits {
 		p := Sigmoid(v)
 		if p > config.C().Threshold {
-			items = append(items, pair{
-				Tag:   model.topTags[i],
+			items = append(items, TagScore{
+				Tag:   m.topTags[i],
 				Score: p,
 			})
 		}
@@ -102,39 +113,12 @@ func PredictHandler(c *gin.Context) {
 		scores[it.Tag] = it.Score
 	}
 
-	resp := map[string]any{
-		"predicted_tags": predicted,
-		"scores":         scores,
+	result := &PredictionResult{
+		PredictedTags: predicted,
+		Scores:        scores,
 	}
 
-	c.JSON(200, resp)
-}
-
-func ModelPredict(img image.Image) (map[string]float32, error) {
-	inputData, err := Preprocess(img)
-	if err != nil {
-		return nil, err
-	}
-
-	model.mu.Lock()
-	defer model.mu.Unlock()
-
-	copy(model.input.(*ort.Tensor[float32]).GetData(), inputData)
-
-	if err := model.session.Run(); err != nil {
-		return nil, err
-	}
-
-	logits := model.output.(*ort.Tensor[float32]).GetData()
-	scores := make(map[string]float32)
-	for i, v := range logits {
-		p := Sigmoid(v)
-		if p > config.C().Threshold {
-			scores[model.topTags[i]] = p
-		}
-	}
-
-	return scores, nil
+	return result, nil
 }
 
 func HealthHandler(c *gin.Context) {

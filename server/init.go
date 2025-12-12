@@ -73,38 +73,42 @@ func Init(ctx context.Context) error {
 		return fmt.Errorf("failed to get model input/output info: %w", err)
 	}
 
-	opts, err := ort.NewSessionOptions()
-	if err != nil {
-		return fmt.Errorf("failed to create session options: %w", err)
-	}
-	inputTensor, err := ort.NewTensor(ort.NewShape(1, 3, ImageSize, ImageSize), make([]float32, 3*ImageSize*ImageSize))
-	if err != nil {
-		return fmt.Errorf("failed to create input tensor: %w", err)
-	}
-	outputTensor, err := ort.NewEmptyTensor[float32](ort.NewShape(1, int64(len(tags))))
-	if err != nil {
-		return fmt.Errorf("failed to create output tensor: %w", err)
-	}
+	modelPool = make(chan *Model, cfg.Workers)
+	for i := 0; i < cfg.Workers; i++ {
+		opts, err := ort.NewSessionOptions()
+		if err != nil {
+			return fmt.Errorf("failed to create session options: %w", err)
+		}
+		inputTensor, err := ort.NewTensor(ort.NewShape(1, 3, ImageSize, ImageSize), make([]float32, 3*ImageSize*ImageSize))
+		if err != nil {
+			return fmt.Errorf("failed to create input tensor: %w", err)
+		}
+		outputTensor, err := ort.NewEmptyTensor[float32](ort.NewShape(1, int64(len(tags))))
+		if err != nil {
+			return fmt.Errorf("failed to create output tensor: %w", err)
+		}
 
-	session, err := ort.NewAdvancedSession(
-		onnxPath,
-		[]string{inputs[0].Name},
-		[]string{outputs[0].Name},
-		[]ort.Value{inputTensor},
-		[]ort.Value{outputTensor},
-		opts,
-	)
-	if err != nil {
-		return fmt.Errorf("failed to create ONNX Runtime session: %w", err)
-	}
+		session, err := ort.NewAdvancedSession(
+			onnxPath,
+			[]string{inputs[0].Name},
+			[]string{outputs[0].Name},
+			[]ort.Value{inputTensor},
+			[]ort.Value{outputTensor},
+			opts,
+		)
+		if err != nil {
+			return fmt.Errorf("failed to create ONNX Runtime session: %w", err)
+		}
 
-	model = &Model{
-		session:    session,
-		input:      inputTensor,
-		output:     outputTensor,
-		inputName:  inputs[0].Name,
-		outputName: outputs[0].Name,
-		topTags:    tags,
+		m := &Model{
+			session:    session,
+			input:      inputTensor,
+			output:     outputTensor,
+			inputName:  inputs[0].Name,
+			outputName: outputs[0].Name,
+			topTags:    tags,
+		}
+		modelPool <- m
 	}
 	return nil
 }

@@ -18,6 +18,11 @@ type TagScore struct {
 	Score float32 `json:"score"`
 }
 
+type PredictionResult struct {
+	PredictedTags []string           `json:"predicted_tags"`
+	Scores        map[string]float32 `json:"scores"`
+}
+
 type Model struct {
 	session    *ort.AdvancedSession
 	input      ort.Value
@@ -28,4 +33,4 @@ type Model struct {
 	mu         sync.Mutex
 }
 
-var model *Model
+var modelPool chan *Model

@@ -13,6 +13,7 @@ type Config struct {
 	Host      string  `toml:"host" mapstructure:"host"`
 	Port      string  `toml:"port" mapstructure:"port"`
 	Threshold float32 `toml:"threshold" mapstructure:"threshold"`
+	Workers   int     `toml:"workers" mapstructure:"workers"`
 	Libonnx   string  `toml:"libonnx" mapstructure:"libonnx"`
 
 	ModelUrl      string `toml:"model_url" mapstructure:"model_url"`
@@ -28,6 +29,7 @@ var (
 		Host:          "0.0.0.0",
 		Port:          "8000",
 		Threshold:     0.4,
+		Workers:       1,
 		ModelUrl:      "https://huggingface.co/fancyfeast/joytag/resolve/main/model.onnx?download=true",
 		ModelTagsUrl:  "https://huggingface.co/fancyfeast/joytag/resolve/main/top_tags.txt?download=true",
 		ModelDir:      "models",
@@ -62,6 +64,7 @@ func C() Config {
 		modelTagsURL := fs.String("model_tags_url", cfg.ModelTagsUrl, "model tags download url")
 		modelTagsName := fs.String("model_tags_name", cfg.ModelTagsName, "model tags filename")
 		modelFileName := fs.String("model_file_name", cfg.ModelFileName, "model file name")
+		workers := fs.Int("workers", cfg.Workers, "number of model workers")
 
 		_ = fs.Parse(os.Args[1:])
 
@@ -73,6 +76,8 @@ func C() Config {
 				cfg.Host = *host
 			case "port":
 				cfg.Port = *port
+			case "workers":
+				cfg.Workers = *workers
 			case "threshold":
 				cfg.Threshold = float32(*threshold)
 			case "libonnx":
