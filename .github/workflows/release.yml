@@ -37,11 +37,22 @@ jobs:
     compile:
         name: Build ${{ matrix.goos }}/${{ matrix.goarch }}
         needs: create-release
-        runs-on: ubuntu-latest
+        runs-on: ${{ matrix.runner }}
         strategy:
             matrix:
-                goos: [linux, darwin]
-                goarch: [amd64, arm64]
+                include:
+                    - goos: linux
+                      goarch: amd64
+                      runner: ubuntu-latest
+                    - goos: linux
+                      goarch: arm64
+                      runner: ubuntu-latest
+                    - goos: darwin
+                      goarch: amd64
+                      runner: macos-latest
+                    - goos: darwin
+                      goarch: arm64
+                      runner: macos-latest
 
         steps:
             - name: Checkout
@@ -52,7 +63,6 @@ jobs:
             - name: Release Go Binary
               uses: wangyoucao577/go-release-action@v1
               with:
-                  pre_command: export CGO_ENABLED=1
                   goos: ${{ matrix.goos }}
                   goarch: ${{ matrix.goarch }}
                   github_token: ${{ secrets.GITHUB_TOKEN }}
