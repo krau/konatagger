@@ -28,7 +28,7 @@ func ensureFile(ctx context.Context, path, url string, name string) error {
 	if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil {
 		return fmt.Errorf("failed to create directory for %s file: %w", name, err)
 	}
-	slog.Debug("Downloading model file", slog.String("name", name), slog.String("url", url))
+	slog.Info("Downloading model file", slog.String("name", name), slog.String("url", url))
 	resp, err := http.Get(url)
 	if err != nil {
 		return fmt.Errorf("failed to download %s file: %w", name, err)
