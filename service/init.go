@@ -1,4 +1,4 @@
-package server
+package service
 
 import (
 	"context"
@@ -63,7 +63,7 @@ func Init(ctx context.Context) error {
 		return err
 	}
 
-	tags, err := ReadTags(tagsPath)
+	tags, err := ReadLines(tagsPath)
 	if err != nil {
 		return fmt.Errorf("failed to read tags: %w", err)
 	}

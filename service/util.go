@@ -1,4 +1,4 @@
-package server
+package service
 
 import (
 	"image"
@@ -25,7 +25,7 @@ func Sigmoid(x float32) float32 {
 	return 1 / (1 + float32(math.Exp(float64(-x))))
 }
 
-func ReadTags(path string) ([]string, error) {
+func ReadLines(path string) ([]string, error) {
 	b, err := os.ReadFile(path)
 	if err != nil {
 		return nil, err
