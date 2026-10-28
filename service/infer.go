@@ -10,25 +10,21 @@ import (
 )
 
 func ModelPredict(img image.Image) (*PredictionResult, error) {
-	inputData, err := Preprocess(img)
-	if err != nil {
-		return nil, err
-	}
-	if modelPool == nil {
+	if workerPool == nil {
 		return nil, fmt.Errorf("model not initialized")
 	}
 
-	m := <-modelPool
-	defer func() { modelPool <- m }()
+	m := <-workerPool
+	defer func() { workerPool <- m }()
 
-	copy(m.input.(*ort.Tensor[float32]).GetData(), inputData)
-	if err := m.session.Run(); err != nil {
+	if err := preprocessInto(img, m.input.GetData()); err != nil {
+		return nil, err
+	}
+	if err := m.session.Run([]ort.Value{m.input}, []ort.Value{m.output}); err != nil {
 		return nil, err
 	}
 
-	logitsTensor := m.output.(*ort.Tensor[float32]).GetData()
-	logits := make([]float32, len(logitsTensor))
-	copy(logits, logitsTensor)
+	logits := m.output.GetData()
 
 	var items []TagScore
 	for i, v := range logits {

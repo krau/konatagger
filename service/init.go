@@ -73,12 +73,28 @@ func Init(ctx context.Context) error {
 		return fmt.Errorf("failed to get model input/output info: %w", err)
 	}
 
-	modelPool = make(chan *Model, cfg.Workers)
-	for i := 0; i < cfg.Workers; i++ {
-		opts, err := ort.NewSessionOptions()
-		if err != nil {
-			return fmt.Errorf("failed to create session options: %w", err)
-		}
+	opts, err := ort.NewSessionOptions()
+	if err != nil {
+		return fmt.Errorf("failed to create session options: %w", err)
+	}
+	defer opts.Destroy()
+	if err := opts.SetGraphOptimizationLevel(ort.GraphOptimizationLevelEnableAll); err != nil {
+		return fmt.Errorf("failed to set graph optimization level: %w", err)
+	}
+
+	session, err := ort.NewDynamicAdvancedSession(
+		onnxPath,
+		[]string{inputs[0].Name},
+		[]string{outputs[0].Name},
+		opts,
+	)
+	if err != nil {
+		return fmt.Errorf("failed to create ONNX Runtime session: %w", err)
+	}
+
+	workers := max(cfg.Workers, 1)
+	workerPool = make(chan *modelWorker, workers)
+	for range workers {
 		inputTensor, err := ort.NewTensor(ort.NewShape(1, 3, ImageSize, ImageSize), make([]float32, 3*ImageSize*ImageSize))
 		if err != nil {
 			return fmt.Errorf("failed to create input tensor: %w", err)
@@ -88,27 +104,12 @@ func Init(ctx context.Context) error {
 			return fmt.Errorf("failed to create output tensor: %w", err)
 		}
 
-		session, err := ort.NewAdvancedSession(
-			onnxPath,
-			[]string{inputs[0].Name},
-			[]string{outputs[0].Name},
-			[]ort.Value{inputTensor},
-			[]ort.Value{outputTensor},
-			opts,
-		)
-		if err != nil {
-			return fmt.Errorf("failed to create ONNX Runtime session: %w", err)
+		workerPool <- &modelWorker{
+			session: session,
+			input:   inputTensor,
+			output:  outputTensor,
+			topTags: tags,
 		}
-
-		m := &Model{
-			session:    session,
-			input:      inputTensor,
-			output:     outputTensor,
-			inputName:  inputs[0].Name,
-			outputName: outputs[0].Name,
-			topTags:    tags,
-		}
-		modelPool <- m
 	}
 	return nil
 }

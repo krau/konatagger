@@ -16,6 +16,24 @@ import (
 	"github.com/disintegration/imaging"
 )
 
+const imagePixels = ImageSize * ImageSize
+
+var (
+	lutR [256]float32
+	lutG [256]float32
+	lutB [256]float32
+)
+
+func init() {
+	for v := range 256 {
+		r := uint32(v) * 0x101
+		fr := float32(r) / 65535.0
+		lutR[v] = (fr - ClipMean[0]) / ClipStd[0]
+		lutG[v] = (fr - ClipMean[1]) / ClipStd[1]
+		lutB[v] = (fr - ClipMean[2]) / ClipStd[2]
+	}
+}
+
 func Sigmoid(x float32) float32 {
 	if x > 50 {
 		x = 50
@@ -43,6 +61,14 @@ func ReadLines(path string) ([]string, error) {
 
 // prepare image for model input
 func Preprocess(img image.Image) ([]float32, error) {
+	out := make([]float32, 3*imagePixels)
+	if err := preprocessInto(img, out); err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func preprocessInto(img image.Image, out []float32) error {
 	b := img.Bounds()
 	w, h := b.Dx(), b.Dy()
 	maxDim := max(h, w)
@@ -52,11 +78,22 @@ func Preprocess(img image.Image) ([]float32, error) {
 	img = imaging.Paste(canvas, img, image.Pt((maxDim-w)/2, (maxDim-h)/2))
 	img = imaging.Resize(img, ImageSize, ImageSize, imaging.Lanczos)
 
-	out := make([]float32, 3*ImageSize*ImageSize)
-	rBase := 0
-	gBase := ImageSize * ImageSize
-	bBase := 2 * ImageSize * ImageSize
+	if nrgba, ok := img.(*image.NRGBA); ok {
+		for y := range ImageSize {
+			for x := range ImageSize {
+				i := nrgba.PixOffset(x, y)
+				o := y*ImageSize + x
+				out[o] = lutR[nrgba.Pix[i]]
+				out[imagePixels+o] = lutG[nrgba.Pix[i+1]]
+				out[2*imagePixels+o] = lutB[nrgba.Pix[i+2]]
+			}
+		}
+		return nil
+	}
 
+	rBase := 0
+	gBase := imagePixels
+	bBase := 2 * imagePixels
 	for y := range ImageSize {
 		for x := range ImageSize {
 			r, g, b, _ := img.At(x, y).RGBA()
@@ -73,5 +110,5 @@ func Preprocess(img image.Image) ([]float32, error) {
 			bBase++
 		}
 	}
-	return out, nil
+	return nil
 }

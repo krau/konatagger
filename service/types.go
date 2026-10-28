@@ -1,8 +1,6 @@
 package service
 
 import (
-	"sync"
-
 	ort "github.com/yalue/onnxruntime_go"
 )
 
@@ -23,14 +21,11 @@ type PredictionResult struct {
 	Scores        map[string]float32 `json:"scores"`
 }
 
-type Model struct {
-	session    *ort.AdvancedSession
-	input      ort.Value
-	output     ort.Value
-	inputName  string
-	outputName string
-	topTags    []string
-	mu         sync.Mutex
+type modelWorker struct {
+	session *ort.DynamicAdvancedSession
+	input   *ort.Tensor[float32]
+	output  *ort.Tensor[float32]
+	topTags []string
 }
 
-var modelPool chan *Model
+var workerPool chan *modelWorker

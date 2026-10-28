@@ -17,6 +17,8 @@ Configuration file is in TOML format. Sample config file `config.example.toml` i
 
 Copy it to `config.toml` and modify as needed.
 
+`workers` sets the number of concurrent inference requests. It defaults to 1-4 based on the CPU count.
+
 ## Usage
 
 Client needs to add Authorization header with Bearer token.

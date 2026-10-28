@@ -3,6 +3,7 @@ package config
 import (
 	"flag"
 	"os"
+	"runtime"
 	"sync"
 
 	"github.com/pelletier/go-toml/v2"
@@ -29,7 +30,7 @@ var (
 		Host:          "0.0.0.0",
 		Port:          "8000",
 		Threshold:     0.4,
-		Workers:       1,
+		Workers:       defaultWorkers(),
 		ModelUrl:      "https://huggingface.co/fancyfeast/joytag/resolve/main/model.onnx?download=true",
 		ModelTagsUrl:  "https://huggingface.co/fancyfeast/joytag/resolve/main/top_tags.txt?download=true",
 		ModelDir:      "models",
@@ -38,6 +39,13 @@ var (
 	}
 	loadOnce sync.Once
 )
+
+func defaultWorkers() int {
+	// Concurrency only raises throughput once there are enough hardware
+	// threads; one slot per four threads, capped at four, is where the
+	// measured throughput plateaus. GOMAXPROCS also respects CPU quotas.
+	return min(max(runtime.GOMAXPROCS(0)/4, 1), 4)
+}
 
 func C() Config {
 	loadOnce.Do(func() {
@@ -94,6 +102,9 @@ func C() Config {
 				cfg.ModelFileName = *modelFileName
 			}
 		})
+		if cfg.Workers < 1 {
+			cfg.Workers = defaultWorkers()
+		}
 	})
 	return cfg
 }

@@ -2,6 +2,8 @@ token = ""
 host = "0.0.0.0"
 port = 39771
 threshold = 0.4
+# number of concurrent inference workers, defaults to 1-4 based on CPU count
+workers = 0
 # the onnxruntime shared lib path
 libonnx = ""
 # model dir
