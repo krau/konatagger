@@ -7,7 +7,7 @@ Reference:
 
 ## Requirements
 
-Onnx Runtime library: Only v1.23.2 was tested on Linux/amd64.
+Onnx Runtime library: Only v1.31.1 was tested on Linux/amd64.
 
 If you are on Linux/amd64, the library has been embedded in the binary and will be extracted at runtime. For other platforms, please install it via your package manager or download from [ONNX Runtime releases](https://github.com/microsoft/onnxruntime)
 

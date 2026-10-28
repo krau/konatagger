@@ -35,7 +35,7 @@ func loadLibPath() string {
 	}
 	switch runtime.GOOS {
 	case "linux":
-		path := filepath.Join("onnxlibs", "libonnxruntime-linux-x64.so.1.23.2")
+		path := filepath.Join("onnxlibs", "libonnxruntime-linux-x64.so.1.31.1")
 		if _, err := os.Stat(path); err == nil {
 			return path
 		}
@@ -43,7 +43,7 @@ func loadLibPath() string {
 			slog.Error("Failed to create onnxlibs directory", slog.String("error", err.Error()))
 			return ""
 		}
-		data, err := onnxLibs.ReadFile("libs/libonnxruntime-linux-x64.so.1.23.2")
+		data, err := onnxLibs.ReadFile("libs/libonnxruntime-linux-x64.so.1.31.1")
 		if err != nil {
 			slog.Error("Failed to read embedded ONNX Runtime library", slog.String("error", err.Error()))
 			return ""
