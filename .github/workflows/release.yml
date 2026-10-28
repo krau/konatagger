@@ -1,62 +1,62 @@
 name: Build Release
 
 on:
-    push:
-        tags: ["v*"]
+  push:
+    tags: ["v*"]
 
 permissions:
-    contents: write
-    packages: write
+  contents: write
+  packages: write
 
 jobs:
-    create-release:
-        name: Create Release
-        runs-on: ubuntu-latest
-        steps:
-            - name: Checkout
-              uses: actions/checkout@v4
-              with:
-                  fetch-depth: 0
+  create-release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
 
-            - name: Create release
-              uses: softprops/action-gh-release@v2
-              with:
-                  name: ${{ github.ref_name }}${{ contains(github.ref_name, 'alpha') || contains(github.ref_name, 'beta') || contains(github.ref_name, 'rc') && ' (Pre-release)' || '' }}
-                  prerelease: ${{ contains(github.ref_name, 'alpha') || contains(github.ref_name, 'beta') || contains(github.ref_name, 'rc') }}
+      - name: Create release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: ${{ github.ref_name }}${{ contains(github.ref_name, 'alpha') || contains(github.ref_name, 'beta') || contains(github.ref_name, 'rc') && ' (Pre-release)' || '' }}
+          prerelease: ${{ contains(github.ref_name, 'alpha') || contains(github.ref_name, 'beta') || contains(github.ref_name, 'rc') }}
 
-            - name: Setup node for changelog
-              uses: actions/setup-node@v4
-              with:
-                  node-version: "20"
+      - name: Setup node for changelog
+        uses: actions/setup-node@v7
+        with:
+          node-version: "node"
 
-            - name: Generate changelog
-              run: npx changelogithub
-              env:
-                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Generate changelog
+        run: npx changelogithub
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-    compile:
-        name: Build ${{ matrix.goos }}/${{ matrix.goarch }}
-        needs: create-release
-        runs-on: ${{ matrix.runner }}
-        strategy:
-            matrix:
-                include:
-                    - goos: linux
-                      goarch: amd64
-                      runner: ubuntu-latest
+  compile:
+    name: Build ${{ matrix.goos }}/${{ matrix.goarch }}
+    needs: create-release
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      matrix:
+        include:
+          - goos: linux
+            goarch: amd64
+            runner: ubuntu-latest
 
-        steps:
-            - name: Checkout
-              uses: actions/checkout@v4
-              with:
-                  fetch-depth: 0
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
 
-            - name: Release Go Binary
-              uses: wangyoucao577/go-release-action@v1
-              with:
-                  goos: ${{ matrix.goos }}
-                  goarch: ${{ matrix.goarch }}
-                  github_token: ${{ secrets.GITHUB_TOKEN }}
-                  ldflags: >-
-                      -s -w
-                  binary_name: konatagger
+      - name: Release Go Binary
+        uses: wangyoucao577/go-release-action@v1
+        with:
+          goos: ${{ matrix.goos }}
+          goarch: ${{ matrix.goarch }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          ldflags: >-
+            -s -w
+          binary_name: konatagger
