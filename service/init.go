@@ -112,6 +112,9 @@ func Init(ctx context.Context) error {
 
 	workers := max(cfg.Workers, 1)
 	workerPool = make(chan *modelWorker, workers)
+	// Resizing already uses all cores internally; a small separate limit
+	// keeps concurrent requests from oversubscribing the CPU.
+	preprocessPool = make(chan struct{}, 2)
 	for range workers {
 		inputTensor, err := ort.NewTensor(ort.NewShape(1, 3, ImageSize, ImageSize), make([]float32, 3*ImageSize*ImageSize))
 		if err != nil {

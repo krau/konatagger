@@ -1,6 +1,8 @@
 package service
 
 import (
+	"sync"
+
 	ort "github.com/yalue/onnxruntime_go"
 )
 
@@ -28,4 +30,13 @@ type modelWorker struct {
 	topTags []string
 }
 
-var workerPool chan *modelWorker
+var (
+	workerPool        chan *modelWorker
+	preprocessPool    chan struct{}
+	preprocessBuffers = sync.Pool{
+		New: func() any {
+			b := make([]float32, 3*ImageSize*ImageSize)
+			return &b
+		},
+	}
+)

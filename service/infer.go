@@ -10,28 +10,38 @@ import (
 )
 
 func ModelPredict(img image.Image) (*PredictionResult, error) {
-	if workerPool == nil {
+	if workerPool == nil || preprocessPool == nil {
 		return nil, fmt.Errorf("model not initialized")
 	}
 
+	bufPtr := preprocessBuffers.Get().(*[]float32)
+	defer preprocessBuffers.Put(bufPtr)
+	buf := *bufPtr
+
+	preprocessPool <- struct{}{}
+	err := preprocessInto(img, buf)
+	<-preprocessPool
+	if err != nil {
+		return nil, err
+	}
+
 	m := <-workerPool
-	defer func() { workerPool <- m }()
-
-	if err := preprocessInto(img, m.input.GetData()); err != nil {
-		return nil, err
-	}
+	copy(m.input.GetData(), buf)
 	if err := m.session.Run([]ort.Value{m.input}, []ort.Value{m.output}); err != nil {
+		workerPool <- m
 		return nil, err
 	}
-
-	logits := m.output.GetData()
+	logits := make([]float32, len(m.output.GetData()))
+	copy(logits, m.output.GetData())
+	topTags := m.topTags
+	workerPool <- m
 
 	var items []TagScore
 	for i, v := range logits {
 		p := Sigmoid(v)
 		if p > config.C().Threshold {
 			items = append(items, TagScore{
-				Tag:   m.topTags[i],
+				Tag:   topTags[i],
 				Score: p,
 			})
 		}
