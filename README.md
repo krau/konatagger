@@ -30,6 +30,8 @@ Copy it to `config.toml` and modify as needed.
 
 `workers` sets the number of concurrent inference requests. It defaults to 1-4 based on the CPU count.
 
+`max_batch_size` limits the number of images accepted by `POST /predict/batch`. It defaults to 16.
+
 ## Usage
 
 Client needs to add Authorization header with Bearer token.
@@ -56,6 +58,27 @@ Response:
         "tag2": 0.8,
         "tag3": 0.7
     }
+}
+```
+
+- `POST /predict/batch`: Predict tags for multiple images.
+
+Upload up to `max_batch_size` images (default 16) via multipart/form-data, repeating the `file` key. Results are returned in the same order as the uploaded files.
+
+Response:
+
+```json
+{
+    "results": [
+        {
+            "predicted_tags": ["tag1", "tag2"],
+            "scores": {"tag1": 0.9, "tag2": 0.8}
+        },
+        {
+            "predicted_tags": ["tag3"],
+            "scores": {"tag3": 0.7}
+        }
+    ]
 }
 ```
 

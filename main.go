@@ -45,6 +45,7 @@ func main() {
 		gin.SetMode(gin.ReleaseMode)
 		r := gin.Default()
 		r.POST("/predict", service.PredictHandler)
+		r.POST("/predict/batch", service.PredictBatchHandler)
 		r.GET("/health", service.HealthHandler)
 
 		addr := config.C().Host + ":" + config.C().Port

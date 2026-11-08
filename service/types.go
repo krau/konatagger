@@ -23,6 +23,10 @@ type PredictionResult struct {
 	Scores        map[string]float32 `json:"scores"`
 }
 
+type BatchPredictionResult struct {
+	Results []*PredictionResult `json:"results"`
+}
+
 type modelWorker struct {
 	session *ort.DynamicAdvancedSession
 	input   *ort.Tensor[float32]
