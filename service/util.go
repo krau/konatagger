@@ -7,13 +7,12 @@ import (
 	_ "image/png"
 	"math"
 	"os"
+	"strings"
 
 	_ "github.com/gen2brain/avif"
 	_ "golang.org/x/image/webp"
 
-	"strings"
-
-	"github.com/disintegration/imaging"
+	"github.com/krau/konatagger/internal/imgproc"
 )
 
 const imagePixels = ImageSize * ImageSize
@@ -71,12 +70,22 @@ func Preprocess(img image.Image) ([]float32, error) {
 func preprocessInto(img image.Image, out []float32) error {
 	b := img.Bounds()
 	w, h := b.Dx(), b.Dy()
-	maxDim := max(h, w)
+	if w <= 0 || h <= 0 {
+		return nil
+	}
 
-	// white padding
-	canvas := imaging.New(maxDim, maxDim, color.White)
-	img = imaging.Paste(canvas, img, image.Pt((maxDim-w)/2, (maxDim-h)/2))
-	img = imaging.Resize(img, ImageSize, ImageSize, imaging.Lanczos)
+	// Pad to a square at a reduced resolution before resizing to the model
+	// input. Padding at the full resolution wastes memory and CPU; 2x the
+	// input size keeps the border close to the reference preprocessing.
+	m := max(w, h)
+	padSize := min(m, 2*ImageSize)
+	scale := float64(padSize) / float64(m)
+	newW := max(1, int(math.Round(float64(w)*scale)))
+	newH := max(1, int(math.Round(float64(h)*scale)))
+	img = imgproc.Resize(img, newW, newH)
+	canvas := imgproc.New(padSize, padSize, color.White)
+	img = imgproc.Paste(canvas, img, image.Pt((padSize-newW)/2, (padSize-newH)/2))
+	img = imgproc.Resize(img, ImageSize, ImageSize)
 
 	if nrgba, ok := img.(*image.NRGBA); ok {
 		for y := range ImageSize {

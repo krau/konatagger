@@ -3,7 +3,6 @@ module github.com/krau/konatagger
 go 1.26.0
 
 require (
-	github.com/disintegration/imaging v1.6.2
 	github.com/gen2brain/avif v0.6.0
 	github.com/gin-gonic/gin v1.12.0
 	github.com/pelletier/go-toml/v2 v2.4.3
