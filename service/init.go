@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strconv"
 
 	"github.com/krau/konatagger/config"
 	ort "github.com/yalue/onnxruntime_go"
@@ -80,6 +81,23 @@ func Init(ctx context.Context) error {
 	defer opts.Destroy()
 	if err := opts.SetGraphOptimizationLevel(ort.GraphOptimizationLevelEnableAll); err != nil {
 		return fmt.Errorf("failed to set graph optimization level: %w", err)
+	}
+
+	if cfg.CUDA {
+		cudaOptions, err := ort.NewCUDAProviderOptions()
+		if err != nil {
+			return fmt.Errorf("failed to create CUDA provider options: %w", err)
+		}
+		defer cudaOptions.Destroy()
+		if err := cudaOptions.Update(map[string]string{
+			"device_id": strconv.Itoa(cfg.CUDADevice),
+		}); err != nil {
+			return fmt.Errorf("failed to configure CUDA provider: %w", err)
+		}
+		if err := opts.AppendExecutionProviderCUDA(cudaOptions); err != nil {
+			return fmt.Errorf("failed to enable CUDA execution provider (a CUDA-enabled ONNX Runtime library is required): %w", err)
+		}
+		slog.Info("CUDA execution provider enabled", slog.Int("device_id", cfg.CUDADevice))
 	}
 
 	session, err := ort.NewDynamicAdvancedSession(

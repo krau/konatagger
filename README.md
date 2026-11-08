@@ -7,9 +7,20 @@ Reference:
 
 ## Requirements
 
-Onnx Runtime library: Only v1.31.1 was tested on Linux/amd64.
+Onnx Runtime library: v1.31.1 (bundled CPU) and v1.29.0 (system CUDA) were tested on Linux/amd64.
 
 If you are on Linux/amd64, the library has been embedded in the binary and will be extracted at runtime. For other platforms, please install it via your package manager or download from [ONNX Runtime releases](https://github.com/microsoft/onnxruntime)
+
+### CUDA
+
+To use a CUDA-enabled ONNX Runtime (e.g. the `onnxruntime-cuda` package), enable the execution provider:
+
+```toml
+cuda = true
+cuda_device = 0
+```
+
+When `libonnx` is empty and `cuda` is enabled, the system library is looked up at `/usr/local/lib/libonnxruntime.so`, `/usr/lib/libonnxruntime.so`, and the Linux multiarch paths. The binding targets the ONNX Runtime 1.29 C API, so the system library must be 1.29 or newer.
 
 ## Configuration
 

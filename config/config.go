@@ -10,12 +10,14 @@ import (
 )
 
 type Config struct {
-	Token     string  `toml:"token" mapstructure:"token"`
-	Host      string  `toml:"host" mapstructure:"host"`
-	Port      string  `toml:"port" mapstructure:"port"`
-	Threshold float32 `toml:"threshold" mapstructure:"threshold"`
-	Workers   int     `toml:"workers" mapstructure:"workers"`
-	Libonnx   string  `toml:"libonnx" mapstructure:"libonnx"`
+	Token      string  `toml:"token" mapstructure:"token"`
+	Host       string  `toml:"host" mapstructure:"host"`
+	Port       string  `toml:"port" mapstructure:"port"`
+	Threshold  float32 `toml:"threshold" mapstructure:"threshold"`
+	Workers    int     `toml:"workers" mapstructure:"workers"`
+	Libonnx    string  `toml:"libonnx" mapstructure:"libonnx"`
+	CUDA       bool    `toml:"cuda" mapstructure:"cuda"`
+	CUDADevice int     `toml:"cuda_device" mapstructure:"cuda_device"`
 
 	ModelUrl      string `toml:"model_url" mapstructure:"model_url"`
 	ModelDir      string `toml:"model_dir" mapstructure:"model_dir"`
@@ -67,6 +69,8 @@ func C() Config {
 		port := fs.String("port", cfg.Port, "server port")
 		threshold := fs.Float64("threshold", float64(cfg.Threshold), "prediction threshold")
 		libonnx := fs.String("libonnx", cfg.Libonnx, "onnx runtime shared library path")
+		cuda := fs.Bool("cuda", cfg.CUDA, "use the CUDA execution provider")
+		cudaDevice := fs.Int("cuda_device", cfg.CUDADevice, "CUDA device id")
 		modelURL := fs.String("model_url", cfg.ModelUrl, "model download url")
 		modelDir := fs.String("model_dir", cfg.ModelDir, "model directory")
 		modelTagsURL := fs.String("model_tags_url", cfg.ModelTagsUrl, "model tags download url")
@@ -90,6 +94,10 @@ func C() Config {
 				cfg.Threshold = float32(*threshold)
 			case "libonnx":
 				cfg.Libonnx = *libonnx
+			case "cuda":
+				cfg.CUDA = *cuda
+			case "cuda_device":
+				cfg.CUDADevice = *cudaDevice
 			case "model_url":
 				cfg.ModelUrl = *modelURL
 			case "model_dir":

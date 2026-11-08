@@ -6,6 +6,10 @@ threshold = 0.4
 workers = 0
 # the onnxruntime shared lib path
 libonnx = ""
+# use the CUDA execution provider, requires a CUDA-enabled onnxruntime library
+cuda = false
+# CUDA device id
+cuda_device = 0
 # model dir
 model_dir = ""
 # model tags file name, default is 'top_tags.txt'

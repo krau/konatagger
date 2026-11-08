@@ -30,8 +30,19 @@ func LibPath() string {
 }
 
 func loadLibPath() string {
-	if config.C().Libonnx != "" {
-		return config.C().Libonnx
+	cfg := config.C()
+	if cfg.CUDA {
+		preloadCUDNN()
+	}
+	if cfg.Libonnx != "" {
+		return cfg.Libonnx
+	}
+	if cfg.CUDA {
+		if path := systemLibPath(); path != "" {
+			slog.Info("Using system ONNX Runtime library for CUDA", slog.String("path", path))
+			return path
+		}
+		slog.Warn("CUDA is enabled but no system ONNX Runtime library was found; falling back to the bundled CPU library")
 	}
 	switch runtime.GOOS {
 	case "linux":
@@ -58,4 +69,23 @@ func loadLibPath() string {
 	default:
 		return ""
 	}
+}
+
+func systemLibPath() string {
+	candidates := []string{
+		"/usr/local/lib/libonnxruntime.so",
+		"/usr/lib/libonnxruntime.so",
+	}
+	switch runtime.GOARCH {
+	case "amd64":
+		candidates = append(candidates, "/usr/lib/x86_64-linux-gnu/libonnxruntime.so")
+	case "arm64":
+		candidates = append(candidates, "/usr/lib/aarch64-linux-gnu/libonnxruntime.so")
+	}
+	for _, path := range candidates {
+		if _, err := os.Stat(path); err == nil {
+			return path
+		}
+	}
+	return ""
 }

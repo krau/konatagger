@@ -7,7 +7,7 @@ require (
 	github.com/gen2brain/avif v0.6.0
 	github.com/gin-gonic/gin v1.12.0
 	github.com/pelletier/go-toml/v2 v2.4.3
-	github.com/yalue/onnxruntime_go v1.38.0
+	github.com/yalue/onnxruntime_go v1.37.0
 	golang.org/x/image v0.47.0
 )
 
